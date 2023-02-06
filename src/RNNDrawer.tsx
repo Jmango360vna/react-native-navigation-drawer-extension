@@ -678,7 +678,7 @@ class RNNDrawer {
    *
    * @param layout
    */
-  static showDrawer<P>(layout: Layout<RNNDrawerOptions & P>) {
+  static showDrawer<P extends IProps>(layout: Layout<RNNDrawerOptions & P>) {
     // By default, for this library, we make the 'componentBackgroundColor' transparent
     const componentBackgroundColor =
       layout?.component?.options?.layout?.componentBackgroundColor ??

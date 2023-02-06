@@ -90,7 +90,7 @@ declare class RNNDrawer {
      *
      * @param layout
      */
-    static showDrawer<P>(layout: Layout<RNNDrawerOptions & P>): void;
+    static showDrawer<P extends IProps>(layout: Layout<RNNDrawerOptions & P>): void;
     /**
      * Dismiss the drawer component
      */
