@@ -61,7 +61,6 @@ export declare enum DirectionType {
 }
 interface IProps {
     /** react-native-navigation */
-    componentId: string;
     /** Props */
     animationOpenTime: number;
     animationCloseTime: number;

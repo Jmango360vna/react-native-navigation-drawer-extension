@@ -20,7 +20,11 @@ import {
   EmitterSubscription,
   StyleProp,
 } from 'react-native';
-import { Navigation, Layout } from 'react-native-navigation';
+import {
+  Navigation,
+  Layout,
+  NavigationComponentProps,
+} from 'react-native-navigation';
 /* Utils - Project Utilities */
 import { listen, dispatch } from './events';
 
@@ -105,7 +109,6 @@ interface IState {
 
 interface IProps {
   /** react-native-navigation */
-  componentId: string;
   /** Props */
   animationOpenTime: number;
   animationCloseTime: number;
@@ -160,7 +163,7 @@ class RNNDrawer {
    * @param Component
    */
   static create<P extends IProps>(Component: React.ComponentType<P>): any {
-    class WrappedDrawer extends React.Component<P, IState> {
+    class WrappedDrawer extends React.Component<P & NavigationComponentProps, IState> {
       private readonly screenWidth: number;
       private readonly screenHeight: number;
       private readonly drawerWidth: number;
@@ -199,7 +202,7 @@ class RNNDrawer {
        *
        * @param {object} props
        */
-      constructor(props: P) {
+      constructor(props: P & NavigationComponentProps) {
         super(props);
         
         this.screenWidth = Dimensions.get('window').width;
