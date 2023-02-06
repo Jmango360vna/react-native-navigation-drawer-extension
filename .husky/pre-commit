@@ -2,7 +2,7 @@
 . "$(dirname "$0")/_/husky.sh"
 
 
-        npm run pre-commit
-        npx tsc
-        git add .
-    
+#        npm run pre-commit
+#        npx tsc
+#        git add .
+

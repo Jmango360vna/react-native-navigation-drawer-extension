@@ -18,6 +18,7 @@ import {
   PanResponderGestureState,
   GestureResponderEvent,
   EmitterSubscription,
+  StyleProp,
 } from 'react-native';
 import { Navigation, Layout } from 'react-native-navigation';
 /* Utils - Project Utilities */
@@ -30,7 +31,7 @@ declare interface RNNDrawerOptions {
    * to push screens inside the drawer
    */
   parentComponentId: string;
-
+  
   /**
    * Direction to open the collage,
    * one of: ["left", "right", "top", "bottom"]
@@ -38,47 +39,47 @@ declare interface RNNDrawerOptions {
    * a weird effect when closing
    */
   direction?: DirectionType;
-
+  
   /**
    * Time in milliseconds to execute the drawer opening animation
    */
   animationOpenTime?: number;
-
+  
   /**
    * Time in milliseconds to execute the drawer closing animation
    */
   animationCloseTime?: number;
-
+  
   /**
    * Whether the drawer be dismissed when a click is registered outside
    */
   dismissWhenTouchOutside?: boolean;
-
+  
   /**
    * Opacity of the screen outside the drawer
    */
   fadeOpacity?: number;
-
+  
   /**
    * Width of drawer on portrait orientation. Pass a string containing '%' (e.g. "80%")
    * for setting the width in relation to the screen or a number for absolute width (e.g. 300)
    */
   drawerScreenWidth?: number | string;
-
+  
   /**
    * Width of drawer on landscape orientation. Pass a string containing '%' (e.g. "80%")
    * for setting the width in relation to the screen or a number for absolute width (e.g. 300)
    */
   drawerScreenWidthOnLandscape?: number | string;
-
+  
   /**
    * Height of drawer. Pass a string containing '%' (e.g. "30%")
    * for setting the height in relation to the screen or a number for absolute height (e.g. 300)
    */
   drawerScreenHeight?: number | string;
-
+  
   disableDragging?: boolean;
-
+  
   disableSwiping?: boolean;
 }
 
@@ -117,7 +118,10 @@ interface IProps {
   animateDrawerExpanding?: boolean;
   disableDragging?: boolean;
   disableSwiping?: boolean;
-  style: any;
+  
+  style?: StyleProp<ViewStyle>;
+  
+  overlayStyle?: StyleProp<ViewStyle>;
 }
 
 interface HOCProps {
@@ -153,10 +157,10 @@ class RNNDrawer {
    * Generates the drawer component to
    * be used with react-native-navigation
    *
-   * @param component
+   * @param Component
    */
-  static create(Component: React.ComponentType): any {
-    class WrappedDrawer extends React.Component<IProps, IState> {
+  static create<P extends IProps>(Component: React.ComponentType<P>): any {
+    class WrappedDrawer extends React.Component<P, IState> {
       private readonly screenWidth: number;
       private readonly screenHeight: number;
       private readonly drawerWidth: number;
@@ -173,7 +177,7 @@ class RNNDrawer {
       private panningStartedPoint: Point = { moveX: 0, moveY: 0 };
       private startedFromSideMenu: boolean = false;
       private orientationChangeListener?: EmitterSubscription;
-
+      
       static defaultProps = {
         animationOpenTime: 300,
         animationCloseTime: 300,
@@ -187,7 +191,7 @@ class RNNDrawer {
         disableDragging: false,
         disableSwiping: false,
       };
-
+      
       /**
        * [ Built-in React method. ]
        *
@@ -195,12 +199,12 @@ class RNNDrawer {
        *
        * @param {object} props
        */
-      constructor(props: IProps) {
+      constructor(props: P) {
         super(props);
-
+        
         this.screenWidth = Dimensions.get('window').width;
         this.screenHeight = Dimensions.get('window').height;
-
+        
         this.panResponder = PanResponder.create({
           onStartShouldSetPanResponder: (
             _evt: GestureResponderEvent,
@@ -215,7 +219,7 @@ class RNNDrawer {
             _gestureState: PanResponderGestureState,
           ) => {
             const { dx, dy } = _gestureState;
-
+            
             if (
               this.props.direction === DirectionType.left ||
               this.props.direction === DirectionType.right
@@ -232,7 +236,7 @@ class RNNDrawer {
             _gestureState: PanResponderGestureState,
           ) => {
             const { moveX, moveY } = _gestureState;
-
+            
             dispatch('SWIPE_START', { moveX, moveY });
           },
           onPanResponderRelease: (
@@ -240,7 +244,7 @@ class RNNDrawer {
             gestureState: PanResponderGestureState,
           ) => {
             const { vx } = gestureState;
-
+            
             // Emit this event when the gesture ends
             dispatch('SWIPE_END', vx > 0 ? 'right' : 'left');
           },
@@ -258,11 +262,11 @@ class RNNDrawer {
           ) => {
             const { moveX, moveY } = _gestureState;
             const direction = this.props.direction || 'left';
-
+            
             dispatch('SWIPE_MOVE', { value: { moveX, moveY }, direction });
           },
         });
-
+        
         /*
          * We need to convert the pushed drawer width
          * to a number as it can either be a string ('20%')
@@ -279,13 +283,13 @@ class RNNDrawer {
           if (typeof value === 'string') {
             const valueAsNumber = parseFloat(value as string) || 100;
             const size = max * (valueAsNumber / 100);
-
+            
             return size;
           }
-
+          
           return value;
         };
-
+        
         /** Component Variables */
         this.drawerWidth = _resolveDrawerSize(
           this.isLandscape()
@@ -297,21 +301,21 @@ class RNNDrawer {
           props.drawerScreenHeight,
           this.screenHeight,
         );
-
+        
         this.drawerOpenedValues = {
           left: 0,
           right: this.screenWidth - this.drawerWidth,
           top: this.drawerHeight - this.screenHeight,
           bottom: this.screenHeight - this.drawerHeight,
         };
-
+        
         this.initialValues = {
           left: -this.drawerWidth,
           right: this.screenWidth,
           top: -this.screenHeight,
           bottom: this.screenHeight,
         };
-
+        
         /** Component State */
         this.state = {
           sideMenuOpenValue: new Animated.Value(
@@ -322,27 +326,26 @@ class RNNDrawer {
           sideMenuIsDismissing: false,
           screenHeight: this.screenHeight,
         };
-
+        
         /** Component Bindings */
         this.touchedOutside = this.touchedOutside.bind(this);
-        this.dismissDrawerWithAnimation = this.dismissDrawerWithAnimation.bind(
-          this,
-        );
+        this.dismissDrawerWithAnimation =
+          this.dismissDrawerWithAnimation.bind(this);
         this.registerListeners = this.registerListeners.bind(this);
         this.removeListeners = this.removeListeners.bind(this);
         this.isLandscape = this.isLandscape.bind(this);
         Navigation.events().bindComponent(this);
       }
-
+      
       /**
        * Check if device is in landscape mode
        */
       isLandscape() {
         const dim = Dimensions.get('window');
-
+        
         return dim.height <= dim.width;
       }
-
+      
       /**
        * [ Built-in React method. ]
        *
@@ -351,20 +354,20 @@ class RNNDrawer {
       componentDidMount() {
         /** Props */
         const { direction, fadeOpacity, animateDrawerExpanding } = this.props;
-
+        
         if (
           typeof animateDrawerExpanding !== 'undefined' &&
           !animateDrawerExpanding
         )
           this.startedFromSideMenu = true;
-
+        
         // Animate side menu open
         this.animatedDrawer = Animated.timing(this.state.sideMenuOpenValue, {
           toValue: this.drawerOpenedValues[direction],
           duration: this.props.animationOpenTime,
           useNativeDriver: true,
         });
-
+        
         // Animate outside side menu opacity
         this.animatedOpacity = Animated.timing(
           this.state.sideMenuOverlayOpacity,
@@ -375,7 +378,7 @@ class RNNDrawer {
           },
         );
       }
-
+      
       /**
        * [ react-native-navigation method. ]
        *
@@ -383,7 +386,7 @@ class RNNDrawer {
        */
       componentDidAppear() {
         this.registerListeners();
-
+        
         // If there has been no Swiping, and this component appears, then just start the open animations
         if (
           !this.state.sideMenuSwipingStarted &&
@@ -393,7 +396,7 @@ class RNNDrawer {
           this.animatedOpacity.start();
         }
       }
-
+      
       /**
        * [ react-native-navigation method. ]
        *
@@ -401,47 +404,47 @@ class RNNDrawer {
        */
       componentDidDisappear() {
         this.removeListeners();
-
+        
         dispatch('DRAWER_CLOSED');
       }
-
+      
       onOrientationChange = ({ window }: any) => {
         const screenHeight = window.height;
-
+        
         this.setState({ screenHeight });
-
+        
         // Apply correct position if opened from right
         if (this.props.direction === 'right') {
           // Calculates the position of the drawer from the left side of the screen
           const alignedMovementValue = window.width - this.drawerWidth;
-
+          
           this.state.sideMenuOpenValue.setValue(alignedMovementValue);
         }
       };
-
+      
       /**
        * Registers all the listenrs for this component
        */
       registerListeners() {
         /** Props */
         const { direction, fadeOpacity } = this.props;
-
+        
         // Adapt the drawer's size on orientation change
         this.orientationChangeListener = Dimensions.addEventListener(
           'change',
           this.onOrientationChange,
         );
-
+        
         // Executes when the side of the screen interaction starts
         this.unsubscribeSwipeStart = listen('SWIPE_START', (value: Point) => {
           this.panningStartedPoint.moveX = value.moveX;
           this.panningStartedPoint.moveY = value.moveY;
-
+          
           this.setState({
             sideMenuSwipingStarted: true,
           });
         });
-
+        
         // Executes when the side of the screen is interacted with
         this.unsubscribeSwipeMove = listen(
           'SWIPE_MOVE',
@@ -465,15 +468,15 @@ class RNNDrawer {
                 this.state.sideMenuOpenValue.setValue(value.moveX);
                 const normalizedOpacity = Math.min(
                   ((this.screenWidth - value.moveX) / this.drawerWidth) *
-                    fadeOpacity,
+                  fadeOpacity,
                   fadeOpacity,
                 );
                 this.state.sideMenuOverlayOpacity.setValue(normalizedOpacity);
               }
-
+              
               return;
             }
-
+            
             if (this.props.disableDragging) return;
             // Calculates the translateX / translateY value
             let alignedMovementValue = 0;
@@ -481,7 +484,7 @@ class RNNDrawer {
             let directionModifier = 1;
             // Whether we use the height of the drawer or the width
             let drawerDimension = this.drawerWidth;
-
+            
             if (swipeDirection === 'left') {
               alignedMovementValue =
                 value.moveX - this.panningStartedPoint.moveX;
@@ -499,7 +502,7 @@ class RNNDrawer {
                 value.moveY - this.panningStartedPoint.moveY;
               drawerDimension = this.drawerHeight;
             }
-
+            
             // Calculates the percentage 0 - 1 of which the drawer is open
             const openedPercentage =
               Math.abs(drawerDimension + alignedMovementValue) /
@@ -509,25 +512,25 @@ class RNNDrawer {
               openedPercentage * fadeOpacity,
               fadeOpacity,
             );
-
+            
             // Does not allow the drawer to go further than the maximum width / height
             if (0 > alignedMovementValue) {
               // Sets the animation values, we use this so we can resume animation from any point
               this.state.sideMenuOpenValue.setValue(
                 this.drawerOpenedValues[direction] +
-                  alignedMovementValue * directionModifier,
+                alignedMovementValue * directionModifier,
               );
               this.state.sideMenuOverlayOpacity.setValue(normalizedOpacity);
             }
           },
         );
-
+        
         // Executes when the side of the screen interaction ends
         this.unsubscribeSwipeEnd = listen(
           'SWIPE_END',
           (swipeDirection: string) => {
             if (this.props.disableSwiping && !this.startedFromSideMenu) return;
-
+            
             const reverseDirection: DrawerReverseDirectionInterface = {
               right: 'left',
               left: 'right',
@@ -536,7 +539,7 @@ class RNNDrawer {
             };
             // In case the drawer started by dragging the edge of the screen reset the flag
             this.startedFromSideMenu = false;
-
+            
             if (swipeDirection === reverseDirection[direction]) {
               this.animatedDrawer.start();
               this.animatedOpacity.start();
@@ -554,7 +557,7 @@ class RNNDrawer {
             }
           },
         );
-
+        
         // Executes when the drawer needs to be dismissed
         this.unsubscribeDismissDrawer = listen('DISMISS_DRAWER', () => {
           if (!this.state.sideMenuIsDismissing) {
@@ -562,7 +565,7 @@ class RNNDrawer {
           }
         });
       }
-
+      
       /**
        * Removes all the listenrs from this component
        */
@@ -574,9 +577,9 @@ class RNNDrawer {
         if (this.unsubscribeSwipeEnd) this.unsubscribeSwipeEnd();
         if (this.unsubscribeDismissDrawer) this.unsubscribeDismissDrawer();
       }
-
+      
       /**
-       * [ Built-in React method. ]
+       * Built-in React method.
        *
        * Allows us to render JSX to the screen
        */
@@ -584,7 +587,7 @@ class RNNDrawer {
         /** Styles */
         const { sideMenuOverlayStyle, sideMenuContainerStyle } = styles;
         /** Props */
-        const { direction, style } = this.props;
+        const { direction, style, overlayStyle } = this.props;
         /** State */
         const { sideMenuOpenValue, sideMenuOverlayOpacity } = this.state;
         /** Variables */
@@ -592,7 +595,7 @@ class RNNDrawer {
           direction === DirectionType.left || direction === DirectionType.right
             ? { translateX: sideMenuOpenValue }
             : { translateY: sideMenuOpenValue };
-
+        
         return (
           <View
             style={sideMenuContainerStyle}
@@ -603,6 +606,7 @@ class RNNDrawer {
                 style={[
                   sideMenuOverlayStyle,
                   { opacity: sideMenuOverlayOpacity },
+                  overlayStyle,
                 ]}
               />
             </TouchableWithoutFeedback>
@@ -622,18 +626,18 @@ class RNNDrawer {
           </View>
         );
       }
-
+      
       /**
        * Touched outside drawer
        */
       touchedOutside() {
         const { dismissWhenTouchOutside } = this.props;
-
+        
         if (dismissWhenTouchOutside) {
           this.dismissDrawerWithAnimation();
         }
       }
-
+      
       /**
        * Dismisses drawer with animation
        */
@@ -646,7 +650,7 @@ class RNNDrawer {
           top: -this.screenHeight,
           bottom: this.screenHeight,
         };
-
+        
         // Animate side menu close
         Animated.timing(this.state.sideMenuOpenValue, {
           toValue: closeValues[direction],
@@ -656,7 +660,7 @@ class RNNDrawer {
           Navigation.dismissOverlay(this.props.componentId);
           this.setState({ sideMenuIsDismissing: false });
         });
-
+        
         // Animate outside side menu opacity
         Animated.timing(this.state.sideMenuOverlayOpacity, {
           toValue: 0,
@@ -665,17 +669,17 @@ class RNNDrawer {
         }).start();
       }
     }
-
+    
     return WrappedDrawer;
   }
-
+  
   /**
    * Shows a drawer component
    *
    * @param layout
    */
-  static showDrawer(layout: Layout<RNNDrawerOptions>) {
-    // By default for this library, we make the 'componentBackgroundColor' transparent
+  static showDrawer<P>(layout: Layout<RNNDrawerOptions & P>) {
+    // By default, for this library, we make the 'componentBackgroundColor' transparent
     const componentBackgroundColor =
       layout?.component?.options?.layout?.componentBackgroundColor ??
       'transparent';
@@ -685,14 +689,14 @@ class RNNDrawer {
         componentBackgroundColor: componentBackgroundColor,
       },
     };
-
+    
     // Mutate options to add 'transparent' by default
     // @ts-ignore
     layout.component.options = { ...options };
-
+    
     Navigation.showOverlay(layout);
   }
-
+  
   /**
    * Dismiss the drawer component
    */
