@@ -3,6 +3,7 @@
  * @description An animated drawer component for react-native-navigation.
  */
 import * as React from 'react';
+import { ViewStyle, StyleProp } from 'react-native';
 import { Layout } from 'react-native-navigation';
 declare interface RNNDrawerOptions {
     /**
@@ -58,20 +59,38 @@ export declare enum DirectionType {
     bottom = "bottom",
     top = "top"
 }
+interface IProps {
+    /** react-native-navigation */
+    componentId: string;
+    /** Props */
+    animationOpenTime: number;
+    animationCloseTime: number;
+    direction: DirectionType;
+    dismissWhenTouchOutside: boolean;
+    fadeOpacity: number;
+    drawerScreenWidth: number | string;
+    drawerScreenWidthOnLandscape: number | string;
+    drawerScreenHeight: number | string;
+    animateDrawerExpanding?: boolean;
+    disableDragging?: boolean;
+    disableSwiping?: boolean;
+    style?: StyleProp<ViewStyle>;
+    overlayStyle?: StyleProp<ViewStyle>;
+}
 declare class RNNDrawer {
     /**
      * Generates the drawer component to
      * be used with react-native-navigation
      *
-     * @param component
+     * @param Component
      */
-    static create(Component: React.ComponentType): any;
+    static create<P extends IProps>(Component: React.ComponentType<P>): any;
     /**
      * Shows a drawer component
      *
      * @param layout
      */
-    static showDrawer(layout: Layout<RNNDrawerOptions>): void;
+    static showDrawer<P>(layout: Layout<RNNDrawerOptions & P>): void;
     /**
      * Dismiss the drawer component
      */
